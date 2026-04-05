@@ -1,0 +1,73 @@
+# ============================================================
+# DSGVO-konforme Aufbereitung des Studiendatensatzes
+# Datensatz_v2
+# ============================================================
+
+# 1. Packages laden
+if (!require("pacman")) install.packages("pacman")
+pacman::p_load(readxl, writexl, dplyr)
+
+# 2. Working Directory auf Skript-Ordner setzen
+setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
+
+# 3. Datensatz einlesen
+df <- read_excel("HausarbeitDS_FDM2025_v1.xlsx")
+
+# Überblick verschaffen
+cat("Spaltennamen im Originaldatensatz:\n")
+print(names(df))
+cat("\nAnzahl Zeilen:", nrow(df), "\n")
+
+# ============================================================
+# DSGVO-Massnahmen
+# ============================================================
+
+df_v2 <- df
+
+# --- Massnahme 1: Direkte Identifikatoren entfernen ---
+# "Name" ist ein direkter Personenidentifikator und muss entfernt werden.
+# "Größe" und "Gewicht" sind indirekte Identifikatoren und werden entfernt,
+# da der BMI bereits berechnet vorliegt und die Variablen nicht benoetigt werden.
+df_v2 <- df_v2 %>% select(-Name, -`Größe`, -Gewicht)
+cat("\nMassnahme 1: Spalten 'Name', 'Größe' und 'Gewicht' entfernt\n")
+
+# --- Massnahme 2: Datumsangaben entfernen ---
+# Datumsangaben koennen in Kombination mit Alter und Diagnose
+# zur Re-Identifikation fuehren (indirekter Identifikator).
+df_v2 <- df_v2 %>% select(-`Datum U1`, -`Datum U2`)
+cat("Massnahme 2: Spalten 'Datum U1' und 'Datum U2' entfernt\n")
+
+# --- Massnahme 3: Alter generalisieren ---
+# Exaktes Alter wird durch Altersgruppen ersetzt (Generalisierung).
+# Dies reduziert das Re-Identifikationsrisiko und entspricht dem
+# Prinzip der Datensparsamkeit (Art. 5 DSGVO).
+df_v2 <- df_v2 %>%
+  mutate(Altersgruppe = case_when(
+    Alter < 30               ~ "unter 30",
+    Alter >= 30 & Alter < 45 ~ "30-44",
+    Alter >= 45 & Alter < 60 ~ "45-59",
+    Alter >= 60 & Alter < 75 ~ "60-74",
+    Alter >= 75              ~ "75+"
+  ))
+df_v2 <- df_v2 %>% select(-Alter)
+cat("Massnahme 3: 'Alter' durch 'Altersgruppe' ersetzt\n")
+
+# ============================================================
+# Ergebnis pruefen
+# ============================================================
+
+cat("\nSpaltennamen im bereinigten Datensatz:\n")
+print(names(df_v2))
+cat("\nVorschau:\n")
+print(head(df_v2))
+
+# ============================================================
+# Datensatz_v2 speichern
+# ============================================================
+
+write_xlsx(df_v2, "Datensatz_v2.xlsx")
+cat("\nDatensatz_v2.xlsx erfolgreich gespeichert!\n")
+
+# Als CSV speichern (UTF-8, fuer Langzeitarchivierung und Interoperabilitaet)
+write.csv(df_v2, "Datensatz_v2.csv", row.names = FALSE, fileEncoding = "UTF-8")
+cat("Datensatz_v2.csv erfolgreich gespeichert!\n")
