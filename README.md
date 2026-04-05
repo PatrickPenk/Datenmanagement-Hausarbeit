@@ -50,7 +50,7 @@ Prospektive Interventionsstudie zur Untersuchung des blutdrucksenkenden Effekts 
 - Rohdaten nur auf begründeten Antrag (Controlled Access)
 
 ## Hinweis
-Die Datensätze (`.xlsx`, `.csv`, `.pdf`) sind aus Datenschutzgründen nicht im Repository enthalten.
+Der Originaldatensazu ist sind aus Datenschutzgründen nicht im Repository enthalten.
 
 ## Autor
 Patrick Penk – 2026
