@@ -1,5 +1,7 @@
 # Datenmanagement Hausarbeit
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.19430162.svg)](https://doi.org/10.5281/zenodo.19430162)
+
 ## Beschreibung
 Dieses Repository enthält den R-Code zur DSGVO-konformen und FAIR-gerechten Aufbereitung eines klinischen Studiendatensatzes im Rahmen der Hausarbeit des Moduls **Forschungsdatenmanagement** (Medizinische Fakultät Mannheim, Universität Heidelberg).
 
