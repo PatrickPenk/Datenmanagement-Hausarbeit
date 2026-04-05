@@ -1,0 +1,149 @@
+# ============================================================
+# FAIR-konforme Aufbereitung des Studiendatensatzes
+# Datensatz_v2 -> Datensatz_v3
+# ============================================================
+
+# 1. Packages laden
+if (!require("pacman")) install.packages("pacman")
+pacman::p_load(readxl, writexl, dplyr, gridExtra, grid)
+
+# 2. Working Directory auf Skript-Ordner setzen
+setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
+
+# Ausgabeordner erstellen falls nicht vorhanden
+if (!dir.exists("Datensatz_v3")) dir.create("Datensatz_v3")
+
+# 3. Datensatz einlesen
+df <- read_excel("Datensatz_v2/Datensatz_v2.xlsx")
+cat("Originaldatensatz geladen:", nrow(df), "Zeilen,", ncol(df), "Spalten\n")
+
+# ============================================================
+# FAIR-Verbesserungen
+# ============================================================
+
+df_v3 <- df
+
+# --- Verbesserung 1: Spaltennamen vereinheitlichen (Interoperabel) ---
+df_v3 <- df_v3 %>% rename(
+  PAT_ID             = `Pat_ID`,
+  GESCHLECHT         = `Geschlecht`,
+  BMI                = `BMI`,
+  DIAGNOSE           = `Diagnose`,
+  RR_PRE_SYS        = `Blutdruck pre sys`,
+  RR_POST_SYS       = `Blutdruck post syst`,
+  RR_PRE_DIA        = `Blutdruck pre dia`,
+  RR_POST_DIA       = `Blutdruck post dia`,
+  BEWEGUNGSPROTOKOLL = `Bewegungsprotokoll`,
+  BEWEGUNGSDATEN     = `Bewegungsdaten`,
+  MEDIKAMENT_DOSIS   = `Medikament Dosierung`,
+  MEDIKAMENT_NAME    = `Medikament Name`,
+  BEHANDLUNGSDAUER   = `Behandlungsdauer`,
+  NEBENWIRKUNGEN     = `Nebenwirkungen`,
+  RAUCHERSTATUS      = `Raucherstatus`,
+  ALTERSGRUPPE       = `Altersgruppe`
+)
+cat("Verbesserung 1: Spaltennamen vereinheitlicht\n")
+
+# --- Verbesserung 2: Geschlecht vereinheitlichen ---
+df_v3 <- df_v3 %>%
+  mutate(GESCHLECHT = case_when(
+    GESCHLECHT %in% c("m", "male", "männlich", "mm")   ~ "m",
+    GESCHLECHT %in% c("w", "female", "weiblich", "ww") ~ "w",
+    GESCHLECHT %in% c("3", "d")                         ~ "d",
+    GESCHLECHT %in% c("1", "2")                         ~ NA_character_,
+    TRUE                                                 ~ NA_character_
+  ))
+cat("Verbesserung 2: Geschlecht vereinheitlicht (m/w/d/NA)\n")
+
+# --- Verbesserung 3: Diagnose bereinigen ---
+df_v3 <- df_v3 %>%
+  mutate(DIAGNOSE = case_when(
+    DIAGNOSE == "Hpertonie" ~ "Hypertonie",
+    DIAGNOSE == "fehlt"     ~ NA_character_,
+    TRUE                    ~ DIAGNOSE
+  ))
+cat("Verbesserung 3: Diagnose bereinigt\n")
+
+# --- Verbesserung 4: Raucherstatus vereinheitlichen ---
+df_v3 <- df_v3 %>%
+  mutate(RAUCHERSTATUS = case_when(
+    RAUCHERSTATUS %in% c("ja", "Raucher")        ~ "Raucher",
+    RAUCHERSTATUS %in% c("nein", "Nichtraucher") ~ "Nichtraucher",
+    RAUCHERSTATUS == "Starker Raucher"            ~ "Starker Raucher",
+    TRUE                                          ~ NA_character_
+  ))
+cat("Verbesserung 4: Raucherstatus vereinheitlicht\n")
+
+# --- Verbesserung 5: Bewegungsprotokoll vereinheitlichen ---
+df_v3 <- df_v3 %>%
+  mutate(BEWEGUNGSPROTOKOLL = case_when(
+    BEWEGUNGSPROTOKOLL %in% c("ja", "ausgefüllt") ~ "ja",
+    BEWEGUNGSPROTOKOLL %in% c("nein")             ~ "nein",
+    BEWEGUNGSPROTOKOLL %in% c("vergessen")        ~ NA_character_,
+    TRUE                                           ~ NA_character_
+  ))
+cat("Verbesserung 5: Bewegungsprotokoll vereinheitlicht\n")
+
+# --- Verbesserung 6: Behandlungsdauer bereinigen ---
+df_v3 <- df_v3 %>%
+  mutate(BEHANDLUNGSDAUER = as.numeric(gsub(" Monate", "", BEHANDLUNGSDAUER)))
+cat("Verbesserung 6: Behandlungsdauer -> nur numerischer Wert\n")
+
+# --- Verbesserung 7: Unplausible Werte als NA markieren ---
+df_v3 <- df_v3 %>%
+  mutate(
+    RR_PRE_DIA  = ifelse(RR_PRE_DIA < 40,  NA, RR_PRE_DIA),
+    RR_POST_DIA = ifelse(RR_POST_DIA < 40, NA, RR_POST_DIA),
+    RR_PRE_SYS  = ifelse(RR_PRE_SYS < 60 | RR_PRE_SYS > 250,  NA, RR_PRE_SYS),
+    RR_POST_SYS = ifelse(RR_POST_SYS < 60 | RR_POST_SYS > 250, NA, RR_POST_SYS),
+    BMI         = ifelse(BMI < 10 | BMI > 70, NA, BMI)
+  )
+cat("Verbesserung 7: Unplausible Werte als NA markiert\n")
+
+# --- Verbesserung 8: Numerische Werte runden ---
+df_v3 <- df_v3 %>%
+  mutate(
+    BMI         = round(BMI, 2),
+    RR_PRE_SYS  = round(RR_PRE_SYS, 1),
+    RR_POST_SYS = round(RR_POST_SYS, 1),
+    RR_PRE_DIA  = round(RR_PRE_DIA, 1),
+    RR_POST_DIA = round(RR_POST_DIA, 1)
+  )
+cat("Verbesserung 8: Numerische Werte gerundet\n")
+
+# --- Verbesserung 9: Leere MEDIKAMENT_NAME Spalte entfernen ---
+df_v3 <- df_v3 %>% select(-MEDIKAMENT_NAME)
+cat("Verbesserung 9: Leere Spalte MEDIKAMENT_NAME entfernt\n")
+
+# ============================================================
+# Ergebnis pruefen
+# ============================================================
+
+cat("\nVorschau Datensatz_v3:\n")
+print(head(df_v3))
+
+# ============================================================
+# Datensatz_v3 speichern
+# ============================================================
+
+write_xlsx(df_v3, "Datensatz_v3/Datensatz_v3.xlsx")
+write.csv(df_v3, "Datensatz_v3/Datensatz_v3.csv", row.names = FALSE, fileEncoding = "UTF-8")
+cat("\nDatensatz_v3.xlsx und .csv gespeichert!\n")
+
+# Als PDF speichern
+pdf("Datensatz_v3/Datensatz_v3.pdf", width = 16, height = 10)
+grid.text("Datensatz_v3 - FAIR-konform bereinigt",
+          x = 0.5, y = 0.97,
+          gp = gpar(fontsize = 14, fontface = "bold"))
+grid.text("Forschungsdatenmanagement Hausarbeit | Patrick Penk",
+          x = 0.5, y = 0.93,
+          gp = gpar(fontsize = 9, col = "grey40"))
+tbl <- tableGrob(df_v3,
+                 rows = NULL,
+                 theme = ttheme_default(
+                   core    = list(fg_params = list(cex = 0.55)),
+                   colhead = list(fg_params = list(cex = 0.65, fontface = "bold"))
+                 ))
+grid.draw(tbl)
+dev.off()
+cat("Datensatz_v3.pdf erfolgreich gespeichert!\n")

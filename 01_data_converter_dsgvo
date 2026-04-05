@@ -5,10 +5,13 @@
 
 # 1. Packages laden
 if (!require("pacman")) install.packages("pacman")
-pacman::p_load(readxl, writexl, dplyr)
+pacman::p_load(readxl, writexl, dplyr, gridExtra, grid)
 
 # 2. Working Directory auf Skript-Ordner setzen
 setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
+
+# Ausgabeordner erstellen falls nicht vorhanden
+if (!dir.exists("Datensatz_v2")) dir.create("Datensatz_v2")
 
 # 3. Datensatz einlesen
 df <- read_excel("HausarbeitDS_FDM2025_v1.xlsx")
@@ -65,9 +68,26 @@ print(head(df_v2))
 # Datensatz_v2 speichern
 # ============================================================
 
-write_xlsx(df_v2, "Datensatz_v2.xlsx")
+write_xlsx(df_v2, "Datensatz_v2/Datensatz_v2.xlsx")
 cat("\nDatensatz_v2.xlsx erfolgreich gespeichert!\n")
 
 # Als CSV speichern (UTF-8, fuer Langzeitarchivierung und Interoperabilitaet)
-write.csv(df_v2, "Datensatz_v2.csv", row.names = FALSE, fileEncoding = "UTF-8")
+write.csv(df_v2, "Datensatz_v2/Datensatz_v2.csv", row.names = FALSE, fileEncoding = "UTF-8")
 cat("Datensatz_v2.csv erfolgreich gespeichert!\n")
+
+# Als PDF speichern
+pdf("Datensatz_v2/Datensatz_v2.pdf", width = 20, height = 12)
+grid.text("Datensatz_v2 - DSGVO-konform bereinigt",
+          x = 0.5, y = 0.97,
+          gp = gpar(fontsize = 14, fontface = "bold"))
+grid.text("Forschungsdatenmanagement Hausarbeit | Patrick Penk",
+          x = 0.5, y = 0.93,
+          gp = gpar(fontsize = 9, col = "grey40"))
+tbl <- tableGrob(df_v2, rows = NULL,
+                 theme = ttheme_default(
+                   core    = list(fg_params = list(cex = 0.45)),
+                   colhead = list(fg_params = list(cex = 0.5, fontface = "bold"))
+                 ))
+grid.draw(tbl)
+dev.off()
+cat("Datensatz_v2.pdf erfolgreich gespeichert!\n")
