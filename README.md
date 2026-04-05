@@ -10,6 +10,7 @@ Prospektive Interventionsstudie zur Untersuchung des blutdrucksenkenden Effekts 
 - `01_data_converter_dsgvo.R` – DSGVO-konforme Bereinigung des Originaldatensatzes → Datensatz_v2
 - `02_data_converter_fair.R` – FAIR-konforme Aufbereitung und Qualitätsverbesserung → Datensatz_v3
 - `03_create_data_dictionary.R` – Automatische Erstellung des Data Dictionaries als PDF
+- `04_data_quality_v4.R` – Datenqualitätssicherung nach Kahn et al. (2016) → Datensatz_v4
 
 ## Datensatzversionen
 | Version | Beschreibung |
@@ -17,6 +18,7 @@ Prospektive Interventionsstudie zur Untersuchung des blutdrucksenkenden Effekts 
 | v1 | Originaldatensatz (nicht im Repository) |
 | v2 | DSGVO-konform bereinigt |
 | v3 | FAIR-konform aufbereitet und qualitätsgesichert |
+| v4 | Datenqualität geprüft nach Kahn et al. (2016) |
 
 ## DSGVO-Maßnahmen (v1 → v2)
 - Entfernung direkter Personenidentifikatoren (Name)
@@ -31,9 +33,19 @@ Prospektive Interventionsstudie zur Untersuchung des blutdrucksenkenden Effekts 
 - Numerische Werte gerundet
 - Export als CSV (UTF-8) für Langzeitarchivierung
 
+## Datenqualitätsmaßnahmen (v3 → v4)
+- **Conformance**: Nebenwirkungen auf kontrolliertes Vokabular standardisiert, Umlaute entfernt
+- **Completeness**: Fehlende Werte dokumentiert und ausgegeben
+- **Plausibility**: BMI von Patient 30027 (BMI = 14.37) als klinisch unplausibel identifiziert und als NA markiert
+
 ## Voraussetzungen
 - R (>= 4.0)
 - Packages: `readxl`, `writexl`, `dplyr`, `gridExtra`, `grid` (werden automatisch via `pacman` installiert)
+
+## Repositorium & Lizenz
+- Datensatz geplant zur Publikation via **Zenodo** (DOI ausstehend)
+- Lizenz: **CC BY 4.0** für anonymisierten Analysedatensatz
+- Rohdaten nur auf begründeten Antrag (Controlled Access)
 
 ## Hinweis
 Die Datensätze (`.xlsx`, `.csv`, `.pdf`) sind aus Datenschutzgründen nicht im Repository enthalten.
